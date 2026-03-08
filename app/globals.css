@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(130deg, #0b1023, #1a1f49, #3b2a72, #10153a);
+  background-size: 300% 300%;
+}
+
+.animated-bg {
+  animation: breathingGradient 16s ease-in-out infinite;
+}
