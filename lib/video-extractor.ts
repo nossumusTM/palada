@@ -26,8 +26,8 @@ const USER_AGENTS = [
 
 const BLOCKED_EXTENSIONS = ['.avif', '.webp', '.jpg', '.jpeg', '.png', '.gif', '.svg'];
 
-const MP4_PATTERN = /https?:\\/\\/[^"'\\s)<>]+\.mp4(?:\?[^"'\\s<>]*)?/gi;
-const GENERIC_URL_PATTERN = /https?:\\/\\/[^"'\\s)<>]+/gi;
+const MP4_PATTERN = /https?:\/\/[^"'\s)<>]+\.mp4(?:\?[^"'\s<>]*)?/gi;
+const GENERIC_URL_PATTERN = /https?:\/\/[^"'\s)<>]+/gi;
 
 async function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

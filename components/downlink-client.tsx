@@ -24,6 +24,12 @@ export function DownlinkClient() {
     [options]
   );
 
+  const visibleOptions = useMemo(() => {
+    const hasKnown = sortedOptions.some((item) => item.label !== 'Unknown quality' || (item.height ?? 0) > 0);
+    if (!hasKnown) return sortedOptions;
+    return sortedOptions.filter((item) => item.label !== 'Unknown quality' && (item.height ?? 0) > 0);
+  }, [sortedOptions]);
+
   async function analyze() {
     setError(null);
     setLoading(true);
@@ -47,36 +53,26 @@ export function DownlinkClient() {
     }
   }
 
-  async function download(option: VideoOption) {
+  async function download(option: VideoOption, format: 'video' | 'mp3') {
     setError(null);
-    setDownloading(option.url);
+    const key = `${option.url}|${format}`;
+    setDownloading(key);
 
     try {
       const fallbacks = sortedOptions.filter((item) => (item.height ?? 0) < (option.height ?? 0)).map((item) => item.url);
-      const response = await fetch('/api/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: option.url,
-          fallbacks,
-          filename: 'video'
-        })
-      });
-
-      if (!response.ok) {
-        const payload = await response.json();
-        throw new Error(payload.error ?? 'Download failed.');
-      }
-
-      const blob = await response.blob();
-      const objectUrl = window.URL.createObjectURL(blob);
       const anchor = document.createElement('a');
-      anchor.href = objectUrl;
-      anchor.download = 'video_highest_quality.mp4';
+      const params = new URLSearchParams();
+      params.set('url', option.url);
+      params.set('filename', 'video');
+      params.set('format', format);
+      for (const fallback of fallbacks) {
+        params.append('fallback', fallback);
+      }
+      anchor.href = `/api/download?${params.toString()}`;
+      anchor.rel = 'noopener';
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      window.URL.revokeObjectURL(objectUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown download error.');
     } finally {
@@ -86,9 +82,9 @@ export function DownlinkClient() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center p-6">
-      <section className="w-full rounded-[32px] border border-white/30 bg-white/5 p-8 shadow-2xl backdrop-blur-[25px] backdrop-saturate-[180%]">
+      <section className="text-center w-full rounded-[32px] bg-white/5 p-8 shadow-2xl backdrop-blur-[25px] backdrop-saturate-[180%]">
         <h1 className="text-3xl font-semibold tracking-tight">🚀 Universal Downlink Video Service</h1>
-        <p className="mt-2 text-sm text-white/70">Paste any video URL, analyze deep sources, and force-save the highest quality MP4.</p>
+        <p className="mt-2 text-sm text-white/70">Paste a video page URL and download either MP4 video or MP3 audio.</p>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <input
@@ -96,13 +92,13 @@ export function DownlinkClient() {
             placeholder="https://example.com/video"
             value={url}
             onChange={(event) => setUrl(event.target.value)}
-            className="w-full rounded-2xl border border-white/20 bg-black/20 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-violet-300/60"
+            className="w-full rounded-2xl bg-black/20 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-violet-300/60"
           />
           <button
             type="button"
             onClick={analyze}
             disabled={loading || !url}
-            className="rounded-2xl bg-violet-400/90 px-5 py-3 text-sm font-medium text-slate-950 transition hover:bg-violet-300 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-2xl bg-blue-400/90 px-5 py-3 text-sm font-medium text-slate-950 transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {loading ? 'Analyzing…' : 'Analyze'}
           </button>
@@ -117,19 +113,27 @@ export function DownlinkClient() {
 
         {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
 
-        {!!sortedOptions.length && (
+        {!!visibleOptions.length && (
           <div className="mt-6 space-y-3">
             <p className="text-sm text-white/70">Choose quality:</p>
             <div className="flex flex-wrap gap-3">
-              {sortedOptions.map((option) => (
-                <button
-                  key={option.url}
-                  onClick={() => download(option)}
-                  disabled={downloading !== null}
-                  className="rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20 disabled:opacity-50"
-                >
-                  {downloading === option.url ? 'Downloading…' : `Download ${option.label}`}
-                </button>
+              {visibleOptions.map((option) => (
+                <div key={option.url} className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 p-2">
+                  <button
+                    onClick={() => download(option, 'video')}
+                    disabled={downloading !== null}
+                    className="rounded-lg border border-white/25 bg-white/10 px-3 py-2 text-sm transition hover:bg-white/20 disabled:opacity-50"
+                  >
+                    {downloading === `${option.url}|video` ? 'Downloading…' : `Video ${option.label}`}
+                  </button>
+                  <button
+                    onClick={() => download(option, 'mp3')}
+                    disabled={downloading !== null}
+                    className="rounded-lg border border-white/25 bg-white/10 px-3 py-2 text-sm transition hover:bg-white/20 disabled:opacity-50"
+                  >
+                    {downloading === `${option.url}|mp3` ? 'Converting…' : `MP3 ${option.label}`}
+                  </button>
+                </div>
               ))}
             </div>
           </div>

@@ -6,12 +6,15 @@
   color-scheme: dark;
 }
 
+html,
 body {
-  min-height: 100vh;
-  background: linear-gradient(130deg, #0b1023, #1a1f49, #3b2a72, #10153a);
-  background-size: 300% 300%;
+  width: 100%;
+  height: 100%;
 }
 
-.animated-bg {
-  animation: breathingGradient 16s ease-in-out infinite;
+body {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  background: radial-gradient(circle at 50% 30%, #0b1228 0%, #060a16 65%, #04060d 100%);
 }
