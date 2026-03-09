@@ -17,14 +17,16 @@ function getDownloadParams(params: {
   fallbacks: unknown;
   filename: unknown;
   format?: unknown;
+  sourceUrl?: unknown;
 }) {
   const primary = typeof params.url === 'string' ? params.url : '';
   const fallbacks = Array.isArray(params.fallbacks)
     ? params.fallbacks.filter((item): item is string => typeof item === 'string')
     : [];
   const format: DownloadFormat = params.format === 'mp3' ? 'mp3' : 'video';
+  const sourceUrl = typeof params.sourceUrl === 'string' ? params.sourceUrl : '';
   const filename = safeFilename(typeof params.filename === 'string' ? params.filename : 'video', format);
-  return { primary, fallbacks, filename, format };
+  return { primary, fallbacks, filename, format, sourceUrl };
 }
 
 async function toMp3Response(response: Response, filename: string) {
@@ -69,18 +71,19 @@ async function toMp3Response(response: Response, filename: string) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { primary, fallbacks, filename, format } = getDownloadParams({
+    const { primary, fallbacks, filename, format, sourceUrl } = getDownloadParams({
       url: body.url,
       fallbacks: body.fallbacks,
       filename: body.filename,
-      format: body.format
+      format: body.format,
+      sourceUrl: body.sourceUrl
     });
 
     if (!primary) {
       return NextResponse.json({ error: 'A video URL is required.' }, { status: 400 });
     }
 
-    const response = await downloadWithFallback([primary, ...fallbacks]);
+    const response = await downloadWithFallback([primary, ...fallbacks], sourceUrl);
     if (format === 'mp3') {
       return await toMp3Response(response, filename);
     }
@@ -103,18 +106,19 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const search = request.nextUrl.searchParams;
-    const { primary, fallbacks, filename, format } = getDownloadParams({
+    const { primary, fallbacks, filename, format, sourceUrl } = getDownloadParams({
       url: search.get('url'),
       fallbacks: search.getAll('fallback'),
       filename: search.get('filename'),
-      format: search.get('format')
+      format: search.get('format'),
+      sourceUrl: search.get('sourceUrl')
     });
 
     if (!primary) {
       return NextResponse.json({ error: 'A video URL is required.' }, { status: 400 });
     }
 
-    const response = await downloadWithFallback([primary, ...fallbacks]);
+    const response = await downloadWithFallback([primary, ...fallbacks], sourceUrl);
     if (format === 'mp3') {
       return await toMp3Response(response, filename);
     }

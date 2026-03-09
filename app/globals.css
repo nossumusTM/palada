@@ -18,3 +18,99 @@ body {
   overflow-x: hidden;
   background: radial-gradient(circle at 50% 30%, #0b1228 0%, #060a16 65%, #04060d 100%);
 }
+
+.water-logo {
+  position: relative;
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 25%, #d8f4ff 0%, #8de4ff 34%, #37b5ff 72%, #1f64ff 100%);
+  box-shadow: 0 0 0 1px #9ee9ff66, 0 10px 28px #2f80ff66, inset 0 -6px 16px #173fa455;
+  transform-origin: center center;
+  animation: water-drop-wobble 3.6s ease-in-out infinite;
+}
+
+.water-logo::before {
+  content: '📥';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #ecf9ff;
+  text-shadow: 0 1px 1px #01224799;
+}
+
+.logo-cluster {
+  position: relative;
+  width: 3.8rem;
+  height: 3.6rem;
+}
+
+.logo-cluster .water-logo {
+  position: absolute;
+  left: 50%;
+  top: 0.2rem;
+  transform: translateX(-50%);
+}
+
+.water-mini {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 30%, #d8f4ff 0%, #8de4ff 38%, #2f8dff 100%);
+  box-shadow: 0 0 0 1px #b5eeff55, 0 6px 14px #2f80ff33;
+  animation: water-mini-float 2.6s ease-in-out infinite;
+}
+
+.water-mini-a {
+  width: 0.72rem;
+  height: 0.72rem;
+  left: 0.2rem;
+  top: 0.6rem;
+  animation-delay: 0s;
+}
+
+.water-mini-b {
+  width: 0.56rem;
+  height: 0.56rem;
+  right: 0.12rem;
+  top: 1.15rem;
+  animation-delay: 0.6s;
+}
+
+.water-mini-c {
+  width: 0.42rem;
+  height: 0.42rem;
+  left: 1.1rem;
+  bottom: 0.05rem;
+  animation-delay: 1.1s;
+}
+
+@keyframes water-drop-wobble {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  20% {
+    transform: rotate(-5deg) scale(1.03, 0.98);
+  }
+  45% {
+    transform: rotate(4deg) scale(0.98, 1.03);
+  }
+  70% {
+    transform: rotate(-2deg) scale(1.01, 0.99);
+  }
+}
+
+@keyframes water-mini-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(0.96);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-7px) scale(1.08);
+    opacity: 1;
+  }
+}

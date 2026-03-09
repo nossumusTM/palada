@@ -18,11 +18,8 @@ export type VideoOption = {
   source: string;
 };
 
-const USER_AGENTS = [
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
-  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'
-];
+const STABLE_USER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
 
 const BLOCKED_EXTENSIONS = ['.avif', '.webp', '.jpg', '.jpeg', '.png', '.gif', '.svg'];
 
@@ -33,8 +30,12 @@ async function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function randomUA(attempt: number) {
-  return USER_AGENTS[attempt % USER_AGENTS.length];
+function toOrigin(url: string) {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
 }
 
 async function fetchWithRetry(url: string, init: RequestInit = {}, retries = 4): Promise<Response> {
@@ -42,8 +43,11 @@ async function fetchWithRetry(url: string, init: RequestInit = {}, retries = 4):
 
   for (let attempt = 0; attempt < retries; attempt += 1) {
     const headers = new Headers(init.headers ?? {});
-    headers.set('User-Agent', randomUA(attempt));
-    headers.set('Accept', 'text/html,application/json,application/xhtml+xml;q=0.9,*/*;q=0.8');
+    headers.set('User-Agent', STABLE_USER_AGENT);
+    headers.set('Accept-Language', 'en-US,en;q=0.9');
+    if (!headers.has('Accept')) {
+      headers.set('Accept', 'text/html,application/json,application/xhtml+xml;q=0.9,*/*;q=0.8');
+    }
 
     try {
       const response = await fetch(url, { ...init, headers, redirect: 'follow' });
@@ -220,15 +224,18 @@ export async function analyzeVideoUrl(inputUrl: string): Promise<VideoOption[]> 
     }));
 }
 
-export async function downloadWithFallback(urls: string[]): Promise<Response> {
+export async function downloadWithFallback(urls: string[], sourcePageUrl?: string): Promise<Response> {
   let lastStatus = 500;
+  const sourceOrigin = sourcePageUrl ? toOrigin(sourcePageUrl) : null;
 
   for (let index = 0; index < urls.length; index += 1) {
+    const streamOrigin = toOrigin(urls[index]);
     const response = await fetchWithRetry(urls[index], {
       method: 'GET',
       headers: {
         Accept: 'video/mp4,application/octet-stream;q=0.9,*/*;q=0.8',
-        Connection: 'keep-alive'
+        Connection: 'keep-alive',
+        ...(sourceOrigin ? { Referer: `${sourceOrigin}/`, Origin: sourceOrigin } : streamOrigin ? { Referer: `${streamOrigin}/`, Origin: streamOrigin } : {})
       }
     }, 3);
 
